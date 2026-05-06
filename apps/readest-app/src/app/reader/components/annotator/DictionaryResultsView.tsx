@@ -310,7 +310,7 @@ export const DictionaryResultsHeader: React.FC<DictionaryResultsHeaderProps> = (
 }) => {
   const _ = useTranslation();
   return (
-    <div className='flex h-8 w-full items-center justify-between px-2'>
+    <div className='-mt-3 flex h-8 w-full items-center justify-between px-2'>
       <div className='flex h-8 w-8 items-center justify-center'>
         {canGoBack ? (
           <button
