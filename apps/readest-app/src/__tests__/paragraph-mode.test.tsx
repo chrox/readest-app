@@ -382,20 +382,52 @@ describe('paragraph mode', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  const getDialog = (container: HTMLElement) =>
+    container.querySelector('[role="dialog"]') as HTMLDivElement;
+
+  it('focuses the dialog when it opens so it receives keys directly (#4717)', async () => {
+    const { container } = await renderVisibleOverlay(vi.fn());
+    const dialog = getDialog(container);
+    expect(document.activeElement).toBe(dialog);
+  });
+
   it('exits when the toggle paragraph mode shortcut (Shift+P) is pressed (#4717)', async () => {
     const onClose = vi.fn();
-    await renderVisibleOverlay(onClose);
+    const { container } = await renderVisibleOverlay(onClose);
 
-    fireEvent.keyDown(document.body, { key: 'P', shiftKey: true });
+    fireEvent.keyDown(getDialog(container), { key: 'P', shiftKey: true });
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('exits when Escape is pressed on the dialog (#4717)', async () => {
+    const onClose = vi.fn();
+    const { container } = await renderVisibleOverlay(onClose);
+
+    fireEvent.keyDown(getDialog(container), { key: 'Escape' });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops the toggle key from propagating so it cannot fire twice (#4717)', async () => {
+    const onClose = vi.fn();
+    const { container } = await renderVisibleOverlay(onClose);
+    const windowSpy = vi.fn();
+    window.addEventListener('keydown', windowSpy);
+
+    fireEvent.keyDown(getDialog(container), { key: 'P', shiftKey: true });
+
+    // The dialog handler must stop propagation so the global useShortcuts
+    // handler never receives the same keypress (which would re-toggle).
+    expect(windowSpy).not.toHaveBeenCalled();
+    window.removeEventListener('keydown', windowSpy);
+  });
+
   it('does not exit on an unrelated key while visible', async () => {
     const onClose = vi.fn();
-    await renderVisibleOverlay(onClose);
+    const { container } = await renderVisibleOverlay(onClose);
 
-    fireEvent.keyDown(document.body, { key: 'x' });
+    fireEvent.keyDown(getDialog(container), { key: 'x' });
 
     expect(onClose).not.toHaveBeenCalled();
   });
